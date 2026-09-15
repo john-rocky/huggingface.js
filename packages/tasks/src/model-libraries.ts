@@ -347,7 +347,6 @@ export const MODEL_LIBRARIES_UI_ELEMENTS = {
 		repoName: "coreai-models",
 		repoUrl: "https://github.com/apple/coreai-models",
 		docsUrl: "https://developer.apple.com/documentation/coreai",
-		snippets: snippets.coreai,
 		filter: false,
 		countDownloads: `path_extension:"mlirb"`,
 	},
