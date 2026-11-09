@@ -119,6 +119,17 @@ function isMlxModel(model: ModelData) {
 	return model.tags.includes("mlx");
 }
 
+function isLiteRtCliModel(model: ModelData): boolean {
+	// `litert lm run <repo>` converts the transformers checkpoint once, then runs it.
+	// The converter rejects quantized checkpoints; .litertlm repos get the LiteRT-LM library snippet.
+	return (
+		model.pipeline_tag === "text-generation" &&
+		isTransformersModel(model) &&
+		!model.config?.quantization_config &&
+		!model.tags.includes("litert-lm")
+	);
+}
+
 /**
  * Returns the model's chat template string, coalescing across sources:
  * GGUF metadata > chat_template_jinja file > tokenizer_config.json
@@ -434,6 +445,17 @@ const snippetMlxLm = (model: ModelData): LocalAppSnippet[] => {
 			: []),
 	];
 };
+
+const snippetLiteRtCli = (model: ModelData): LocalAppSnippet[] => [
+	{
+		title: "Install from pip and run the model",
+		setup: ["# Install LiteRT CLI from pip:", "pip install -U litert-cli-nightly"].join("\n"),
+		content: [
+			"# Run the model (the first run converts it to LiteRT and caches it):",
+			`litert lm run ${model.id} --prompt "What is the capital of France?"`,
+		].join("\n"),
+	},
+];
 
 const getLocalServerPort = (model: ModelData): number => (isMlxModel(model) ? 8080 : 9931);
 
@@ -815,6 +837,13 @@ export const LOCAL_APPS = {
 		mainTask: "text-generation",
 		displayOnModelPage: isToolCallingLocalAgentModel,
 		snippet: snippetOpenClaw,
+	},
+	"litert-cli": {
+		prettyLabel: "LiteRT CLI",
+		docsUrl: "https://github.com/google-ai-edge/LiteRT-CLI",
+		mainTask: "text-generation",
+		displayOnModelPage: isLiteRtCliModel,
+		snippet: snippetLiteRtCli,
 	},
 } satisfies Record<string, LocalApp>;
 
