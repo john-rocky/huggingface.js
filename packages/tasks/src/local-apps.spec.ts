@@ -410,4 +410,57 @@ curl -X POST "http://localhost:8000/v1/chat/completions" \\
 			{ label: "Releases", url: "https://github.com/bartowski/Llama-3.2-3B-Instruct-GGUF/releases" },
 		]);
 	});
+
+	it("litert-cli transformers llm", async () => {
+		const { displayOnModelPage, snippet: snippetFunc } = LOCAL_APPS["litert-cli"];
+		const model: ModelData = {
+			id: "Qwen/Qwen3-0.6B",
+			pipeline_tag: "text-generation",
+			tags: ["transformers", "safetensors", "qwen3", "text-generation", "conversational"],
+			inference: "",
+		};
+		const snippet = snippetFunc(model);
+
+		expect(displayOnModelPage(model)).toBe(true);
+		expect(snippet[0].setup).toEqual(`# Install LiteRT CLI from pip:
+pip install -U litert-cli-nightly`);
+		expect(snippet[0].content).toEqual(`# Run the model (the first run converts it to LiteRT and caches it):
+litert lm run Qwen/Qwen3-0.6B --prompt "What is the capital of France?"`);
+	});
+
+	it("litert-cli not shown for litert-lm, quantized, gguf or vision models", async () => {
+		const { displayOnModelPage } = LOCAL_APPS["litert-cli"];
+		const models: ModelData[] = [
+			{
+				id: "litert-community/Qwen3-0.6B",
+				pipeline_tag: "text-generation",
+				tags: ["litert-lm", "text-generation"],
+				inference: "",
+			},
+			{
+				id: "Qwen/Qwen3-4B-AWQ",
+				pipeline_tag: "text-generation",
+				tags: ["transformers", "safetensors", "text-generation", "awq"],
+				config: { quantization_config: { bits: 4, quant_method: "awq" } },
+				inference: "",
+			},
+			{
+				id: "bartowski/Llama-3.2-3B-Instruct-GGUF",
+				pipeline_tag: "text-generation",
+				tags: ["gguf", "conversational"],
+				gguf: { total: 1, context_length: 4096 },
+				inference: "",
+			},
+			{
+				id: "meta-llama/Llama-3.2-11B-Vision-Instruct",
+				pipeline_tag: "image-text-to-text",
+				tags: ["transformers", "safetensors", "conversational"],
+				inference: "",
+			},
+		];
+
+		for (const model of models) {
+			expect(displayOnModelPage(model)).toBe(false);
+		}
+	});
 });
